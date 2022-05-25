@@ -1,0 +1,125 @@
+# Copyright 1999-2022 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+# Modified by Jenna Fligor 2022
+
+EAPI=8
+
+inherit desktop pax-utils xdg
+
+DESCRIPTION="Multiplatform Visual Studio Code Insiders Edition from Microsoft"
+HOMEPAGE="https://code.visualstudio.com"
+SRC_URI="
+	amd64? ( https://update.code.visualstudio.com/latest/linux-x64/insider -> ${P}-amd64.tar.gz )
+	arm? ( https://update.code.visualstudio.com/latest/linux-armhf/insider -> ${P}-arm.tar.gz )
+	arm64? ( https://update.code.visualstudio.com/latest/linux-arm64/insider -> ${P}-arm64.tar.gz )
+"
+S="${WORKDIR}"
+
+RESTRICT="mirror strip bindist"
+
+LICENSE="
+	Apache-2.0
+	BSD
+	BSD-1
+	BSD-2
+	BSD-4
+	CC-BY-4.0
+	ISC
+	LGPL-2.1+
+	Microsoft-vscode-insiders
+	MIT
+	MPL-2.0
+	openssl
+	PYTHON
+	TextMate-bundle
+	Unlicense
+	UoI-NCSA
+	W3C
+"
+SLOT="0"
+KEYWORDS="-* ~amd64 ~arm ~arm64"
+
+RDEPEND="
+	app-accessibility/at-spi2-atk:2
+	app-accessibility/at-spi2-core:2
+	app-crypt/libsecret[crypt]
+	dev-libs/atk
+	dev-libs/expat
+	dev-libs/glib:2
+	dev-libs/nspr
+	dev-libs/nss
+	media-libs/alsa-lib
+	media-libs/mesa
+	sys-apps/dbus
+	x11-libs/cairo
+	x11-libs/gdk-pixbuf:2
+	x11-libs/gtk+:3
+	x11-libs/libdrm
+	x11-libs/libX11
+	x11-libs/libxcb
+	x11-libs/libXcomposite
+	x11-libs/libXdamage
+	x11-libs/libXext
+	x11-libs/libXfixes
+	x11-libs/libxkbcommon
+	x11-libs/libxkbfile
+	x11-libs/libXrandr
+	x11-libs/libxshmfence
+	x11-libs/pango
+"
+
+QA_PREBUILT="
+	/opt/vscode-insiders/code-insiders
+	/opt/vscode-insiders/libEGL.so
+	/opt/vscode-insiders/libffmpeg.so
+	/opt/vscode-insiders/libGLESv2.so
+	/opt/vscode-insiders/libvulkan.so*
+	/opt/vscode-insiders/chrome-sandbox
+	/opt/vscode-insiders/libvk_swiftshader.so
+	/opt/vscode-insiders/swiftshader/libEGL.so
+	/opt/vscode-insiders/swiftshader/libGLESv2.so
+	/opt/vscode-insiders/resources/app/extensions/*
+	/opt/vscode-insiders/resources/app/node_modules.asar.unpacked/*
+"
+
+src_install() {
+	if use amd64; then
+		cd "${WORKDIR}/VSCode-linux-x64" || die
+	elif use arm; then
+		cd "${WORKDIR}/VSCode-linux-armhf" || die
+	elif use arm64; then
+		cd "${WORKDIR}/VSCode-linux-arm64" || die
+	else
+		die "Visual Studio Code Insiders only supports amd64, arm and arm64"
+	fi
+
+	# Cleanup
+	# rm -r ./resources/app/LICENSES.chromium.html ./resources/app/LICENSE.rtf ./resources/app/licenses || die
+	rm -r ./resources/app/LICENSES.chromium.html ./resources/app/LICENSE.rtf || die
+
+	# Install
+	pax-mark m code-insiders
+	insinto "/opt/${PN}"
+	doins -r *
+	test -f /opt/${PN}/chrome_crashpad_handler && fperms +x /opt/${PN}/chrome_crashpad_handler
+	fperms +x /opt/${PN}/{,bin/}code-insiders
+#	fperms 4711 /opt/${PN}/chrome-sandbox
+	fperms 711 /opt/${PN}/chrome-sandbox
+	fperms 755 /opt/${PN}/resources/app/extensions/git/dist/askpass.sh
+	fperms 755 /opt/${PN}/resources/app/extensions/git/dist/askpass-empty.sh
+	fperms -R +x /opt/${PN}/resources/app/out/vs/base/node
+	fperms +x /opt/${PN}/resources/app/node_modules.asar.unpacked/@vscode/ripgrep/bin/rg
+	dosym "../../opt/${PN}/bin/code-insiders" "usr/bin/vscode-insiders"
+	dosym "../../opt/${PN}/bin/code-insiders" "usr/bin/code-insiders"
+	domenu "${FILESDIR}/vscode-insiders.desktop"
+	domenu "${FILESDIR}/vscode-insiders-url-handler.desktop"
+	domenu "${FILESDIR}/vscode-insiders-wayland.desktop"
+	domenu "${FILESDIR}/vscode-insiders-url-handler-wayland.desktop"
+	newicon "resources/app/resources/linux/code.png" "vscode-insiders.png"
+}
+
+pkg_postinst() {
+	xdg_pkg_postinst
+	elog "You may want to install some additional utils, check in:"
+	elog "https://code.visualstudio.com/Docs/setup#_additional-tools"
+}

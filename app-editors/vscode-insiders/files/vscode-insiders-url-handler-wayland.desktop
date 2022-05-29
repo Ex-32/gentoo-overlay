@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=VSCode Insiders - URL Handler
+Name=VSCode Insiders - URL Handler Wayland
 Comment=Editing evolved
 GenericName=Code Editor
 Exec=/usr/bin/vscode-insiders --enable-features=UseOzonePlatform --ozone-platform=wayland --open-url %U

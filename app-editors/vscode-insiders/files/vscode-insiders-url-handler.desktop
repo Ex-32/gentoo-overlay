@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=VSCode-insiders - URL Handler
+Name=VSCode Insiders - URL Handler
 Comment=Editing evolved
 GenericName=Code Editor
 Exec=/usr/bin/vscode-insiders --open-url %U
